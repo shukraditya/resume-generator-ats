@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}ATS Analysis Results - Resume Tool{% endblock %}
+
+{% block content %}
+<div class="container">
+    <header class="page-header">
+        <div class="score-display">
+            <span class="score-number">{{ report.overall_score }}</span>
+            <span class="score-label">Overall Score</span>
+        </div>
+        <div class="header-content">
+            <h1>ATS Analysis Results
+                {% if cache_status == "HIT" %}
+                <span class="badge badge-success">Cached</span>
+                {% endif %}
+            </h1>
+            <p class="text-muted">Mode: <span class="badge badge-{{ 'primary' if mode == 'job-match' else 'secondary' }}">{{ mode|title }}</span></p>
+        </div>
+    </header>
+
+    <div class="analysis-grid">
+        <!-- Summary -->
+        <section class="card card-full">
+            <h2>Executive Summary</h2>
+            <p class="summary-text">{{ report.summary }}</p>
+        </section>
+
+        <!-- Section Scores -->
+        <section class="card">
+            <h2>Section Scores</h2>
+            <div class="section-scores">
+                {% for section in report.sections %}
+                <div class="score-row">
+                    <div class="score-bar-container">
+                        <div class="score-bar" style="width: {{ section.score }}%;"></div>
+                    </div>
+                    <div class="score-details">
+                        <span class="score-name">{{ section.name }}</span>
+                        <span class="score-value">{{ section.score }}/100</span>
+                    </div>
+                    <p class="score-feedback">{{ section.feedback }}</p>
+                    {% if section.improvements %}
+                    <ul class="improvement-list">
+                        {% for imp in section.improvements %}
+                        <li>{{ imp }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- Keywords -->
+        <section class="card">
+            <h2>Keyword Analysis</h2>
+
+            {% if report.keywords.found %}
+            <div class="keyword-group keyword-found">
+                <h3>Keywords Found ✓</h3>
+                <div class="keyword-tags">
+                    {% for kw in report.keywords.found %}
+                    <span class="tag tag-success">{{ kw }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if report.keywords.missing %}
+            <div class="keyword-group keyword-missing">
+                <h3>Missing Keywords ⚠</h3>
+                <div class="keyword-tags">
+                    {% for kw in report.keywords.missing %}
+                    <span class="tag tag-warning">{{ kw }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if report.keywords.repeated %}
+            <div class="keyword-group keyword-repeated">
+                <h3>Overused Words</h3>
+                <ul class="repeated-list">
+                    {% for rep in report.keywords.repeated %}
+                    <li>
+                        <strong>"{{ rep.word }}"</strong> used {{ rep.count }} times
+                        {% if rep.suggestion %}
+                        <br><span class="suggestion">→ {{ rep.suggestion }}</span>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- Action Verbs -->
+        <section class="card">
+            <h2>Action Verbs</h2>
+
+            {% if report.action_verbs.strong_verbs_used %}
+            <div class="verb-group">
+                <h3>Strong Verbs Used</h3>
+                <div class="verb-tags">
+                    {% for verb in report.action_verbs.strong_verbs_used %}
+                    <span class="tag tag-success">{{ verb }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if report.action_verbs.weak_verbs_found %}
+            <div class="verb-group">
+                <h3>Weak Verbs to Replace</h3>
+                <ul class="weak-verb-list">
+                    {% for i in range(report.action_verbs.weak_verbs_found|length) %}
+                    <li>
+                        <span class="weak">{{ report.action_verbs.weak_verbs_found[i] }}</span>
+                        {% if report.action_verbs.recommendations and report.action_verbs.recommendations[i] %}
+                        → {{ report.action_verbs.recommendations[i] }}
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- Quantification -->
+        <section class="card">
+            <h2>Quantification</h2>
+
+            {% if report.quantification.metrics_found %}
+            <div class="metric-group">
+                <h3>Metrics Found ✓</h3>
+                <ul class="metric-list">
+                    {% for metric in report.quantification.metrics_found %}
+                    <li>{{ metric }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if report.quantification.missing_metrics_areas %}
+            <div class="metric-group">
+                <h3>Areas Missing Metrics</h3>
+                <ul class="missing-list">
+                    {% for area in report.quantification.missing_metrics_areas %}
+                    <li>{{ area }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if report.quantification.recommendations %}
+            <div class="metric-group">
+                <h3>Recommendations</h3>
+                <ul class="recommendation-list">
+                    {% for rec in report.quantification.recommendations %}
+                    <li>{{ rec }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- Formatting -->
+        <section class="card">
+            <h2>Formatting & ATS Compatibility</h2>
+
+            <div class="format-status {{ 'format-good' if report.formatting.ats_compatible else 'format-bad' }}">
+                {% if report.formatting.ats_compatible %}
+                ✓ ATS Compatible
+                {% else %}
+                ✗ May have ATS issues
+                {% endif %}
+            </div>
+
+            {% if report.formatting.strengths %}
+            <div class="format-group">
+                <h3>Strengths</h3>
+                <ul class="strength-list">
+                    {% for s in report.formatting.strengths %}
+                    <li>{{ s }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if report.formatting.issues %}
+            <div class="format-group">
+                <h3>Issues</h3>
+                <ul class="issue-list">
+                    {% for issue in report.formatting.issues %}
+                    <li>{{ issue }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- Readability -->
+        <section class="card">
+            <h2>Readability</h2>
+
+            <div class="readability-stats">
+                <div class="stat">
+                    <span class="stat-value">{{ report.readability.scannability_score }}/100</span>
+                    <span class="stat-label">Scannability</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">{{ report.readability.bullet_length }}</span>
+                    <span class="stat-label">Bullet Length</span>
+                </div>
+            </div>
+
+            {% if report.readability.issues %}
+            <div class="readability-issues">
+                <h3>Issues</h3>
+                <ul>
+                    {% for issue in report.readability.issues %}
+                    <li>{{ issue }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- Top Priorities -->
+        <section class="card card-highlight card-full">
+            <h2>🎯 Top Priorities for Improvement</h2>
+            <ol class="priority-list">
+                {% for priority in report.top_priorities %}
+                <li>{{ priority }}</li>
+                {% endfor %}
+            </ol>
+        </section>
+
+        <!-- Report Data -->
+        <section class="card card-full">
+            <h2>Report Data</h2>
+            <button onclick="copyReport()" class="btn btn-primary">Copy JSON to Clipboard</button>
+            <p class="text-muted text-small" style="margin-top: 0.5rem;">
+                Analysis reports are cached for 1 hour. No files are stored on the server.
+            </p>
+        </section>
+    </div>
+
+    <footer class="page-footer">
+        <a href="/" class="action-link">← Back to Home</a>
+    </footer>
+</div>
+
+<script>
+// Report data for copying
+const reportData = {{ report_json | tojson }};
+
+function copyReport() {
+    navigator.clipboard.writeText(JSON.stringify(reportData, null, 2)).then(() => {
+        alert('Report JSON copied to clipboard!');
+    });
+}
+</script>
+{% endblock %}

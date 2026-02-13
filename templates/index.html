@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <section class="hero">
+        <h1>Resume Converter <span class="text-muted">&</span> ATS Analyzer</h1>
+        <p class="lead">Convert your Markdown resume to LaTeX/PDF and get AI-powered feedback on how to improve it.</p>
+    </section>
+
+    {% if error %}
+    <div class="alert alert-error">
+        <p>{{ error }}</p>
+    </div>
+    {% endif %}
+
+    <div class="grid grid-2">
+        <!-- Conversion Card -->
+        <article class="card">
+            <header class="card-header">
+                <h2>Convert to LaTeX/PDF</h2>
+                <p class="text-muted">Transform your Markdown resume using the Jake Ryan template.</p>
+            </header>
+
+            <form action="/convert" method="post" enctype="multipart/form-data" class="form">
+                <div class="form-group">
+                    <label for="convert-resume-text">Paste your Markdown resume</label>
+                    <textarea
+                        id="convert-resume-text"
+                        name="resume_text"
+                        rows="12"
+                        placeholder="# **Your Name**
+Kolkata, IN | LinkedIn | +91-XXXX | email@example.com | GitHub
+
+**EDUCATION**
+**University Name** **Location**
+*Degree* Date
+* GPA: X.XX/XX
+
+**WORK EXPERIENCE**
+**Company** **Location**
+*Role* Date
+* Bullet point with **bold** action verbs
+..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="convert-resume-file">Or upload a .md file</label>
+                    <input type="file" id="convert-resume-file" name="resume_file" accept=".md,.txt,.markdown">
+                </div>
+
+                <button type="submit" class="btn btn-primary">Generate LaTeX + PDF</button>
+            </form>
+        </article>
+
+        <!-- Analysis Card -->
+        <article class="card">
+            <header class="card-header">
+                <h2>ATS Analysis</h2>
+                <p class="text-muted">Get holistic AI feedback on your resume's effectiveness.</p>
+            </header>
+
+            <form action="/analyze" method="post" enctype="multipart/form-data" class="form">
+                <div class="form-group">
+                    <label for="analyze-resume-text">Paste your Markdown resume</label>
+                    <textarea
+                        id="analyze-resume-text"
+                        name="resume_text"
+                        rows="6"
+                        placeholder="Paste your resume here for ATS analysis..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="analyze-resume-file">Or upload a file</label>
+                    <input type="file" id="analyze-resume-file" name="resume_file" accept=".md,.txt,.markdown,.pdf">
+                </div>
+
+                <div class="form-group">
+                    <label class="toggle-label">
+                        <input type="radio" name="analysis_mode" value="standalone" checked>
+                        <span>General Analysis</span>
+                    </label>
+                    <label class="toggle-label">
+                        <input type="radio" name="analysis_mode" value="job_match">
+                        <span>Compare to Job Description</span>
+                    </label>
+                </div>
+
+                <div class="form-group" id="job-desc-group" style="display: none;">
+                    <label for="job-description">Job Description (for comparison mode)</label>
+                    <textarea
+                        id="job-description"
+                        name="job_description"
+                        rows="6"
+                        placeholder="Paste the job description here..."></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-secondary">Run ATS Analysis</button>
+            </form>
+        </article>
+    </div>
+
+    <section class="features">
+        <h2 class="sr-only">Features</h2>
+        <div class="grid grid-3">
+            <div class="feature">
+                <h3>Markdown → LaTeX</h3>
+                <p>Convert your Markdown resume to professional LaTeX format using the proven Jake Ryan template.</p>
+            </div>
+            <div class="feature">
+                <h3>PDF Generation</h3>
+                <p>Automatic PDF compilation with proper ATS-safe encoding and clean typography.</p>
+            </div>
+            <div class="feature">
+                <h3>AI-Powered Analysis</h3>
+                <p>Get detailed feedback on keywords, action verbs, quantification, and formatting.</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+// Toggle job description field based on analysis mode
+const jobMatchRadio = document.querySelector('input[value="job_match"]');
+const standaloneRadio = document.querySelector('input[value="standalone"]');
+const jobDescGroup = document.getElementById('job-desc-group');
+
+jobMatchRadio.addEventListener('change', () => {
+    jobDescGroup.style.display = 'block';
+});
+
+standaloneRadio.addEventListener('change', () => {
+    jobDescGroup.style.display = 'none';
+});
+
+// Store resume text in sessionStorage when submitting conversion form
+const convertForm = document.querySelector('form[action="/convert"]');
+if (convertForm) {
+    convertForm.addEventListener('submit', function(e) {
+        const textArea = document.getElementById('convert-resume-text');
+        if (textArea && textArea.value.trim()) {
+            sessionStorage.setItem('lastResumeText', textArea.value.trim());
+        }
+    });
+}
+</script>
+{% endblock %}
