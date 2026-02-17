@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}ATS Improvements - Resume Tool{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/diff.css">
+<link rel="stylesheet" href="/static/css/editor.css">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <header class="page-header">
+        <div class="header-content">
+            <h1>ATS Improvements</h1>
+            <p class="text-muted">AI-powered suggestions to improve your resume's ATS score</p>
+        </div>
+    </header>
+
+    <!-- Hidden data -->
+    <input type="hidden" id="resume-text" value="{{ resume_text }}">
+    <input type="hidden" id="latex-content" value="{{ latex_content }}">
+
+    <!-- Loading State -->
+    <div id="loading-state" class="card card-highlight card-full">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h2>Analyzing your resume...</h2>
+            <p class="text-muted">Running ATS analysis and generating improvement suggestions</p>
+        </div>
+    </div>
+
+    <!-- Results State (hidden initially) -->
+    <div id="results-state" style="display: none;">
+        <!-- Score Comparison -->
+        <div class="card card-highlight card-full">
+            <div class="score-comparison">
+                <div class="score-item">
+                    <span class="score-value" id="current-score">--</span>
+                    <span class="score-label">Current Score</span>
+                </div>
+                <div class="score-arrow">→</div>
+                <div class="score-item">
+                    <span class="score-value" id="target-score">--</span>
+                    <span class="score-label">Target Score</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="card card-full">
+            <div class="improve-actions">
+                <button id="btn-apply-all" class="btn btn-primary">
+                    Apply All Suggestions
+                </button>
+                <a id="btn-open-editor" href="#" class="btn btn-secondary">
+                    Open in Editor
+                </a>
+                <button id="btn-reject-all" class="btn btn-text">
+                    Reject All
+                </button>
+            </div>
+        </div>
+
+        <!-- Suggestions List -->
+        <div id="suggestions-container" class="suggestions-list">
+            <!-- Suggestions will be rendered here -->
+        </div>
+
+        <!-- Empty State (if no suggestions) -->
+        <div id="no-suggestions" class="card card-full" style="display: none;">
+            <p class="text-muted text-center">No improvement suggestions found. Your resume looks great!</p>
+        </div>
+    </div>
+
+    <!-- Error State -->
+    <div id="error-state" class="alert alert-error" style="display: none;">
+        <p id="error-message"></p>
+    </div>
+</div>
+
+<!-- Suggestion Template (hidden) -->
+<template id="suggestion-template">
+    <div class="suggestion-card" data-suggestion-id="">
+        <div class="suggestion-header">
+            <div class="suggestion-meta">
+                <span class="suggestion-priority"></span>
+                <span class="suggestion-section"></span>
+            </div>
+            <h3 class="suggestion-title"></h3>
+            <p class="suggestion-reason text-muted"></p>
+        </div>
+
+        <div class="suggestion-diff">
+            <pre class="diff-view"><code></code></pre>
+        </div>
+
+        <div class="suggestion-actions">
+            <button class="btn btn-primary btn-small btn-apply">Apply</button>
+            <button class="btn btn-secondary btn-small btn-reject">Reject</button>
+        </div>
+    </div>
+</template>
+
+<!-- Hidden form for navigation to editor -->
+<form id="editor-form" action="/editor" method="get" style="display: none;">
+    <input type="hidden" name="latex_content" id="editor-latex-content">
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/improve.js"></script>
+{% endblock %}

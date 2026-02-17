@@ -49,6 +49,11 @@
                     <a href="/convert" class="action-link">← Convert another resume</a>
                 </li>
                 <li>
+                    <button onclick="openInEditor()" class="action-link" style="background: none; border: none; cursor: pointer;">
+                        Open in Editor ✎
+                    </button>
+                </li>
+                <li>
                     <a href="/analyze" class="action-link">Run ATS Analysis →</a>
                 </li>
             </ul>
@@ -84,5 +89,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const latexUrl = URL.createObjectURL(latexBlob);
     document.getElementById('latex-download').href = latexUrl;
 });
+
+function openInEditor() {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/editor';
+    form.style.display = 'none';
+
+    const latexInput = document.createElement('textarea');
+    latexInput.name = 'latex_content';
+    latexInput.value = fullLatex;
+
+    form.appendChild(latexInput);
+    document.body.appendChild(form);
+    form.submit();
+}
 </script>
 {% endblock %}

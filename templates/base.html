@@ -1,19 +1,34 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Resume Converter + ATS Analyzer{% endblock %}</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    {% block head %}{% endblock %}
+    <script>
+        // Theme initialization - run immediately to prevent flash
+        (function() {
+            const saved = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = saved || (prefersDark ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
 </head>
 <body>
     <header class="site-header">
         <nav class="container">
             <a href="/" class="logo">Resume<span class="logo-accent">Tool</span></a>
-            <ul class="nav-links">
-                <li><a href="/">Convert</a></li>
-                <li><a href="/">Analyze</a></li>
-            </ul>
+            <div style="display: flex; align-items: center; gap: var(--space-4);">
+                <ul class="nav-links">
+                    <li><a href="/convert">Convert</a></li>
+                    <li><a href="/analyze">Analyze</a></li>
+                </ul>
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+                    <span id="theme-icon">🌙</span>
+                </button>
+            </div>
         </nav>
     </header>
 
@@ -26,5 +41,37 @@
             <p>Built with FastAPI + Kimi AI</p>
         </div>
     </footer>
+
+    <script>
+        // Theme toggle functionality
+        (function() {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const html = document.documentElement;
+
+            function getIcon(theme) {
+                return theme === 'dark' ? '☀️' : '🌙';
+            }
+
+            function updateIcon(theme) {
+                themeIcon.textContent = getIcon(theme);
+                toggleBtn.setAttribute('aria-label', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+            }
+
+            // Set initial icon
+            const currentTheme = html.getAttribute('data-theme');
+            updateIcon(currentTheme);
+
+            toggleBtn.addEventListener('click', function() {
+                const currentTheme = html.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+                html.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                updateIcon(newTheme);
+            });
+        })();
+    </script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

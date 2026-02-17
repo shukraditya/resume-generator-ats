@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}LaTeX Editor - Resume Tool{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/editor.css">
+<!-- CodeMirror for LaTeX editing -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/eclipse.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/stex/stex.min.js"></script>
+<!-- PDF.js for PDF preview -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="editor-container">
+    <!-- Editor Header -->
+    <header class="editor-header">
+        <div class="editor-header-left">
+            <h1>LaTeX Editor</h1>
+            <span class="editor-status" id="status-indicator">
+                <span class="status-dot status-ready"></span>
+                Ready
+            </span>
+        </div>
+        <div class="editor-header-right">
+            <button id="btn-compile" class="btn btn-secondary btn-small">
+                <span id="compile-icon">&#x21bb;</span> Compile
+            </button>
+            <button id="btn-export" class="btn btn-primary btn-small">
+                Export PDF
+            </button>
+            <a href="/improve?resume_text={{ resume_text | urlencode }}&latex_content={{ latex_content | urlencode }}" class="btn btn-secondary btn-small">
+                Improve with AI
+            </a>
+        </div>
+    </header>
+
+    <!-- Editor Split Pane -->
+    <div class="editor-split">
+        <!-- Left: LaTeX Editor -->
+        <div class="editor-pane editor-pane-left">
+            <div class="pane-header">
+                <span class="pane-title">resume.tex</span>
+                <button id="btn-copy-latex" class="btn-icon" title="Copy LaTeX">&#x2398;</button>
+            </div>
+            <div class="editor-wrapper">
+                <textarea id="latex-editor">{{ latex_content }}</textarea>
+            </div>
+        </div>
+
+        <!-- Resize Handle -->
+        <div class="resize-handle" id="resize-handle"></div>
+
+        <!-- Right: PDF Preview -->
+        <div class="editor-pane editor-pane-right">
+            <div class="pane-header">
+                <span class="pane-title">Preview</span>
+                <div class="pdf-controls">
+                    <button id="pdf-zoom-out" class="btn-icon" title="Zoom out">&#x2212;</button>
+                    <span id="pdf-zoom-level">100%</span>
+                    <button id="pdf-zoom-in" class="btn-icon" title="Zoom in">+</button>
+                </div>
+            </div>
+            <div class="pdf-wrapper" id="pdf-container">
+                <div class="pdf-placeholder">
+                    <p>Click "Compile" to generate PDF preview</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <footer class="editor-statusbar">
+        <div class="statusbar-left">
+            <span id="cursor-position">Line 1, Col 1</span>
+        </div>
+        <div class="statusbar-right">
+            <span id="last-compiled">Last compiled: Never</span>
+        </div>
+    </footer>
+</div>
+
+<!-- Hidden form for export -->
+<form id="export-form" action="/editor/export" method="post" style="display: none;">
+    <input type="hidden" name="latex_content" id="export-latex-content">
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/editor.js"></script>
+<script>
+    // Initialize with PDF base64 if available
+    const initialPdfBase64 = {{ pdf_base64 | tojson }};
+</script>
+{% endblock %}

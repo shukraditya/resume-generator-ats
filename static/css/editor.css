@@ -1,0 +1,400 @@
+/* Editor-specific styles */
+
+.editor-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 60px); /* Subtract header height */
+    background-color: var(--color-surface);
+}
+
+/* Editor Header */
+.editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-3) var(--space-6);
+    background-color: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.editor-header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.editor-header h1 {
+    font-size: var(--text-lg);
+    margin: 0;
+}
+
+.editor-header-right {
+    display: flex;
+    gap: var(--space-3);
+}
+
+.editor-status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-full);
+}
+
+.status-ready { background-color: var(--color-success); }
+.status-compiling { background-color: var(--color-warning); animation: pulse 1s infinite; }
+.status-error { background-color: var(--color-error); }
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Split Pane Layout */
+.editor-split {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.editor-pane {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.editor-pane-left {
+    flex: 1;
+    min-width: 300px;
+}
+
+.editor-pane-right {
+    flex: 1;
+    min-width: 300px;
+    background-color: var(--color-bg);
+}
+
+.resize-handle {
+    width: 4px;
+    background-color: var(--color-border);
+    cursor: col-resize;
+    transition: background-color 0.15s ease;
+}
+
+.resize-handle:hover {
+    background-color: var(--color-primary);
+}
+
+.resize-handle.resizing {
+    background-color: var(--color-primary);
+}
+
+/* Pane Header */
+.pane-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-2) var(--space-4);
+    background-color: var(--color-surface-elevated);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.pane-title {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+}
+
+/* Editor Wrapper */
+.editor-wrapper {
+    flex: 1;
+    overflow: hidden;
+}
+
+.editor-wrapper .CodeMirror {
+    height: 100%;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* PDF Wrapper */
+.pdf-wrapper {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--space-6);
+    background-color: #525659;
+    gap: var(--space-4);
+}
+
+.pdf-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    color: var(--color-text-muted);
+}
+
+#pdf-canvas,
+.pdf-page-canvas {
+    box-shadow: var(--shadow-xl);
+    max-width: 100%;
+    height: auto;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+}
+
+.pdf-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+}
+
+/* Status Bar */
+.editor-statusbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-2) var(--space-4);
+    background-color: var(--color-primary);
+    color: white;
+    font-size: var(--text-xs);
+}
+
+.statusbar-left,
+.statusbar-right {
+    display: flex;
+    gap: var(--space-4);
+}
+
+/* Button styles for editor */
+.btn-icon {
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--text-base);
+    line-height: 1;
+    border-radius: var(--radius-sm);
+    transition: all 0.15s ease;
+}
+
+.btn-icon:hover {
+    background-color: var(--color-primary-bg);
+    color: var(--color-primary);
+}
+
+.btn-text {
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--text-sm);
+}
+
+.btn-text:hover {
+    color: var(--color-error);
+}
+
+/* Loading spinner */
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: var(--radius-full);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-12);
+}
+
+/* Score comparison */
+.score-comparison {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-8);
+    padding: var(--space-6);
+}
+
+.score-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.score-value {
+    font-size: var(--text-3xl);
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.score-label {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.score-arrow {
+    font-size: var(--text-2xl);
+    color: var(--color-primary);
+    font-weight: 700;
+}
+
+/* Improvement actions */
+.improve-actions {
+    display: flex;
+    gap: var(--space-3);
+    justify-content: center;
+}
+
+/* Suggestions list */
+.suggestions-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+}
+
+.suggestion-card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.suggestion-card.applied {
+    border-color: var(--color-success);
+    opacity: 0.7;
+}
+
+.suggestion-card.rejected {
+    border-color: var(--color-border-subtle);
+    opacity: 0.5;
+}
+
+.suggestion-header {
+    padding: var(--space-4) var(--space-6);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.suggestion-meta {
+    display: flex;
+    gap: var(--space-3);
+    margin-bottom: var(--space-2);
+}
+
+.suggestion-priority {
+    font-size: var(--text-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+}
+
+.suggestion-priority.priority-1 {
+    background-color: var(--color-error-bg);
+    color: var(--color-error);
+}
+
+.suggestion-priority.priority-2 {
+    background-color: var(--color-warning-bg);
+    color: var(--color-warning);
+}
+
+.suggestion-priority.priority-3,
+.suggestion-priority.priority-4,
+.suggestion-priority.priority-5 {
+    background-color: var(--color-secondary-bg);
+    color: var(--color-secondary);
+}
+
+.suggestion-section {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+}
+
+.suggestion-title {
+    font-size: var(--text-base);
+    margin-bottom: var(--space-1);
+}
+
+.suggestion-reason {
+    font-size: var(--text-sm);
+    margin: 0;
+}
+
+.suggestion-diff {
+    background-color: var(--color-code-bg);
+    overflow-x: auto;
+}
+
+.suggestion-actions {
+    display: flex;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-6);
+    border-top: 1px solid var(--color-border);
+    background-color: var(--color-surface-elevated);
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .editor-container {
+    background-color: var(--color-surface);
+}
+
+[data-theme="dark"] .pdf-wrapper {
+    background-color: #2a2a2a;
+}
+
+[data-theme="dark"] .editor-statusbar {
+    background-color: var(--color-primary-dark);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .editor-split {
+        flex-direction: column;
+    }
+
+    .resize-handle {
+        width: 100%;
+        height: 4px;
+        cursor: row-resize;
+    }
+
+    .score-comparison {
+        flex-direction: column;
+        gap: var(--space-4);
+    }
+
+    .score-arrow {
+        transform: rotate(90deg);
+    }
+}

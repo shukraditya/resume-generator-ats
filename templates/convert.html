@@ -79,4 +79,33 @@ Kolkata, IN | LinkedIn | +91-XXXX | email@example.com | GitHub
         </div>
     </section>
 </div>
+
+<!-- Hidden form for navigating to improve -->
+<form id="improve-form" action="/improve" method="get" style="display: none;">
+    <textarea name="resume_text" id="improve-resume-text"></textarea>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Check if user wants to improve after conversion
+const wantToImprove = sessionStorage.getItem('want_to_improve');
+if (wantToImprove === 'true') {
+    sessionStorage.removeItem('want_to_improve');
+    // We'll capture the form submission and redirect to improve
+    const form = document.querySelector('form[action="/convert"]');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const resumeText = document.getElementById('resume-text').value;
+            if (resumeText.trim()) {
+                document.getElementById('improve-resume-text').value = resumeText;
+                document.getElementById('improve-form').submit();
+            } else {
+                form.submit(); // Fallback to normal flow
+            }
+        });
+    }
+}
+</script>
 {% endblock %}

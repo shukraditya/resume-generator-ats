@@ -243,6 +243,18 @@
         </section>
     </div>
 
+    <!-- AI Improvements CTA -->
+    <section class="card card-highlight card-full">
+        <h2>🚀 Improve with AI</h2>
+        <p class="text-muted">
+            Get AI-powered suggestions to improve your resume's ATS score.
+            Changes are applied as git diffs on your LaTeX source.
+        </p>
+        <button id="btn-improve-ai" class="btn btn-primary" style="margin-top: var(--space-4);">
+            Generate Improvements →
+        </button>
+    </section>
+
     <footer class="page-footer">
         <a href="/" class="action-link">← Back to Home</a>
     </footer>
@@ -257,5 +269,14 @@ function copyReport() {
         alert('Report JSON copied to clipboard!');
     });
 }
+
+// Navigate to improve page
+// Note: resume_text needs to be retrieved from previous form or session
+// For now, we'll redirect to analyze page to get the resume text
+document.getElementById('btn-improve-ai')?.addEventListener('click', function() {
+    // Store that user wants to improve, navigate to convert to get resume text
+    sessionStorage.setItem('want_to_improve', 'true');
+    window.location.href = '/convert';
+});
 </script>
 {% endblock %}
