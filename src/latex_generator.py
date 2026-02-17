@@ -1,6 +1,6 @@
 """Generate LaTeX from structured resume data."""
 
-from .md_parser import Resume, ContactInfo, Education, Experience, Project, escape_latex
+from .md_parser import Resume, ContactInfo, Education, Experience, Project, escape_latex, clean_markdown
 
 
 def generate_contact_latex(contact: ContactInfo) -> str:
@@ -51,7 +51,10 @@ def generate_education_latex(education: list[Education]) -> str:
         if edu.details:
             latex += "      \\resumeItemListStart\n"
             for detail in edu.details:
-                latex += f"        \\resumeItem{{{escape_latex(detail)}}}\n"
+                # First escape user content, then apply markdown formatting
+                escaped = escape_latex(detail)
+                cleaned = clean_markdown(escaped)
+                latex += f"        \\resumeItem{{{cleaned}}}\n"
             latex += "      \\resumeItemListEnd\n"
 
     latex += "  \\resumeSubHeadingListEnd\n"
@@ -79,8 +82,10 @@ def generate_experience_latex(experiences: list[Experience]) -> str:
         if exp.bullets:
             latex += "      \\resumeItemListStart\n"
             for bullet in exp.bullets:
-                # Already cleaned markdown, just escape latex
-                latex += f"        \\resumeItem{{{escape_latex(bullet)}}}\n"
+                # First escape user content, then apply markdown formatting
+                escaped = escape_latex(bullet)
+                cleaned = clean_markdown(escaped)
+                latex += f"        \\resumeItem{{{cleaned}}}\n"
             latex += "      \\resumeItemListEnd\n"
 
     latex += "  \\resumeSubHeadingListEnd\n"
@@ -113,7 +118,10 @@ def generate_projects_latex(projects: list[Project]) -> str:
         if proj.bullets:
             latex += "          \\resumeItemListStart\n"
             for bullet in proj.bullets:
-                latex += f"            \\resumeItem{{{escape_latex(bullet)}}}\n"
+                # First escape user content, then apply markdown formatting
+                escaped = escape_latex(bullet)
+                cleaned = clean_markdown(escaped)
+                latex += f"            \\resumeItem{{{cleaned}}}\n"
             latex += "          \\resumeItemListEnd\n"
 
     latex += "    \\resumeSubHeadingListEnd\n"

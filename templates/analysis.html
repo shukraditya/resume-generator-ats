@@ -10,11 +10,7 @@
             <span class="score-label">Overall Score</span>
         </div>
         <div class="header-content">
-            <h1>ATS Analysis Results
-                {% if cache_status == "HIT" %}
-                <span class="badge badge-success">Cached</span>
-                {% endif %}
-            </h1>
+            <h1>ATS Analysis Results</h1>
             <p class="text-muted">Mode: <span class="badge badge-{{ 'primary' if mode == 'job-match' else 'secondary' }}">{{ mode|title }}</span></p>
         </div>
     </header>
@@ -242,7 +238,7 @@
             <h2>Report Data</h2>
             <button onclick="copyReport()" class="btn btn-primary">Copy JSON to Clipboard</button>
             <p class="text-muted text-small" style="margin-top: 0.5rem;">
-                Analysis reports are cached for 1 hour. No files are stored on the server.
+                No files are stored on the server. Analysis is generated fresh each time.
             </p>
         </section>
     </div>

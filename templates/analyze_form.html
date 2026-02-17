@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}ATS Analysis - Resume Toolchain{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header" style="margin-top: var(--space-8);">
+        <a href="/" class="btn btn-small" style="text-decoration: none;">← Back</a>
+        <h1 style="margin-bottom: 0;">ATS Analysis</h1>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-error">
+        <p>{{ error }}</p>
+    </div>
+    {% endif %}
+
+    <div class="grid">
+        <article class="card card-full" style="max-width: 900px; margin-inline: auto;">
+            <header class="card-header">
+                <h2>Analyze Your Resume</h2>
+                <p class="text-muted">Get AI-powered feedback on keywords, action verbs, quantification, and formatting.</p>
+            </header>
+
+            <form action="/analyze" method="post" enctype="multipart/form-data" class="form">
+                <div class="form-group">
+                    <label for="resume-text">Resume Markdown</label>
+                    <textarea
+                        id="resume-text"
+                        name="resume_text"
+                        rows="12"
+                        placeholder="Paste your resume here for ATS analysis...">{{ prefill_text or '' }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="resume-file">Or upload a file</label>
+                    <input type="file" id="resume-file" name="resume_file" accept=".md,.txt,.markdown,.pdf">
+                </div>
+
+                <div class="form-group">
+                    <label>Analysis Mode</label>
+                    <label class="toggle-label">
+                        <input type="radio" name="analysis_mode" value="standalone" checked>
+                        <span>General Analysis — Get overall resume feedback</span>
+                    </label>
+                    <label class="toggle-label">
+                        <input type="radio" name="analysis_mode" value="job_match">
+                        <span>Job Match — Compare against a job description</span>
+                    </label>
+                </div>
+
+                <div class="form-group" id="job-desc-group" style="display: none;">
+                    <label for="job-description">Job Description</label>
+                    <textarea
+                        id="job-description"
+                        name="job_description"
+                        rows="8"
+                        placeholder="Paste the job description here for comparison..."></textarea>
+                </div>
+
+                <div style="display: flex; justify-content: center;">
+                    <button type="submit" class="btn btn-secondary" style="min-width: 200px;">
+                        Run ATS Analysis
+                    </button>
+                </div>
+            </form>
+        </article>
+    </div>
+
+    <section class="features" style="max-width: 700px; margin-inline: auto; margin-top: var(--space-12);">
+        <h3 style="text-align: center; margin-bottom: var(--space-6);">What You'll Get</h3>
+        <div class="grid grid-3">
+            <div class="feature" style="text-align: center;">
+                <h4>📊 Overall Score</h4>
+                <p class="text-muted" style="font-size: var(--text-sm);">A 0-100 score with detailed breakdown.</p>
+            </div>
+            <div class="feature" style="text-align: center;">
+                <h4>🎯 Keywords</h4>
+                <p class="text-muted" style="font-size: var(--text-sm);">Found, missing, and repeated keywords.</p>
+            </div>
+            <div class="feature" style="text-align: center;">
+                <h4>✍️ Action Verbs</h4>
+                <p class="text-muted" style="font-size: var(--text-sm);">Strong vs weak verb analysis.</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+// Toggle job description field based on analysis mode
+const jobMatchRadio = document.querySelector('input[value="job_match"]');
+const standaloneRadio = document.querySelector('input[value="standalone"]');
+const jobDescGroup = document.getElementById('job-desc-group');
+
+jobMatchRadio.addEventListener('change', () => {
+    jobDescGroup.style.display = 'block';
+});
+
+standaloneRadio.addEventListener('change', () => {
+    jobDescGroup.style.display = 'none';
+});
+</script>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Convert to LaTeX/PDF - Resume Toolchain{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header" style="margin-top: var(--space-8);">
+        <a href="/" class="btn btn-small" style="text-decoration: none;">← Back</a>
+        <h1 style="margin-bottom: 0;">Convert to LaTeX/PDF</h1>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-error">
+        <p>{{ error }}</p>
+    </div>
+    {% endif %}
+
+    <div class="grid">
+        <article class="card card-full" style="max-width: 900px; margin-inline: auto;">
+            <header class="card-header">
+                <h2>Paste Your Markdown Resume</h2>
+                <p class="text-muted">We'll convert it to a professional LaTeX PDF using the Jake Ryan template.</p>
+            </header>
+
+            <form action="/convert" method="post" enctype="multipart/form-data" class="form">
+                <div class="form-group">
+                    <label for="resume-text">Resume Markdown</label>
+                    <textarea
+                        id="resume-text"
+                        name="resume_text"
+                        rows="20"
+                        placeholder="# **Your Name**
+Kolkata, IN | LinkedIn | +91-XXXX | email@example.com | GitHub
+
+**EDUCATION**
+**University Name** **Location**
+*Degree* Date
+* GPA: X.XX/XX
+
+**WORK EXPERIENCE**
+**Company** **Location**
+*Role* Date
+* Bullet point with **bold** action verbs
+...">{{ prefill_text or '' }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="resume-file">Or upload a .md file</label>
+                    <input type="file" id="resume-file" name="resume_file" accept=".md,.txt,.markdown">
+                </div>
+
+                <div style="display: flex; gap: var(--space-4); justify-content: center;">
+                    <button type="submit" class="btn btn-primary" style="min-width: 200px;">
+                        Generate LaTeX + PDF
+                    </button>
+                    <button type="submit" formaction="/convert-stream" class="btn btn-secondary" style="min-width: 200px;">
+                        Download PDF Only
+                    </button>
+                </div>
+            </form>
+        </article>
+    </div>
+
+    <section class="features" style="max-width: 700px; margin-inline: auto; margin-top: var(--space-12);">
+        <h3 style="text-align: center; margin-bottom: var(--space-6);">How It Works</h3>
+        <div class="grid grid-3">
+            <div class="feature" style="text-align: center;">
+                <h4>1. Paste</h4>
+                <p class="text-muted" style="font-size: var(--text-sm);">Paste your Markdown resume or upload a file.</p>
+            </div>
+            <div class="feature" style="text-align: center;">
+                <h4>2. Convert</h4>
+                <p class="text-muted" style="font-size: var(--text-sm);">We generate LaTeX and compile to PDF.</p>
+            </div>
+            <div class="feature" style="text-align: center;">
+                <h4>3. Download</h4>
+                <p class="text-muted" style="font-size: var(--text-sm);">Get your PDF and optionally the LaTeX source.</p>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

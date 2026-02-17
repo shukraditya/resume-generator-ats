@@ -52,10 +52,21 @@ class Resume:
 
 
 def escape_latex(text: str) -> str:
-    """Escape special LaTeX characters."""
-    # Use placeholder approach to avoid double-escaping issues
-    placeholder = "\x00BACKSLASH\x00"
-    text = text.replace("\\", placeholder)
+    """Escape special LaTeX characters (but not backslashes - those are for commands)."""
+    # Use placeholders for already-escaped sequences to protect them
+    placeholders = {}
+    counter = 0
+
+    # Protect already-escaped sequences (preceded by backslash)
+    for char in ['&', '%', '$', '#', '_', '{', '}', '~', '^']:
+        pattern = f'\\{char}'
+        while pattern in text:
+            placeholder = f"\x00ESC{counter}\x00"
+            placeholders[placeholder] = pattern
+            text = text.replace(pattern, placeholder, 1)
+            counter += 1
+
+    # Now escape special characters
     text = text.replace("{", "\\{")
     text = text.replace("}", "\\}")
     text = text.replace("&", "\\&")
@@ -65,7 +76,11 @@ def escape_latex(text: str) -> str:
     text = text.replace("_", "\\_")
     text = text.replace("~", "\\textasciitilde{}")
     text = text.replace("^", "\\textasciicircum{}")
-    text = text.replace(placeholder, "\\textbackslash{}")
+
+    # Restore protected sequences
+    for placeholder, original in placeholders.items():
+        text = text.replace(placeholder, original)
+
     return text
 
 
@@ -125,11 +140,11 @@ def parse_contact_details(lines: List[str]) -> ContactInfo:
                 match = re.search(r'\[([^\]]+)\]\(mailto:([^)]+)\)', part)
                 if match:
                     contact.email = match.group(2)
-            # Phone (has + and numbers)
-            elif re.search(r'\+\d[\d\s-]+', part):
-                phone_match = re.search(r'(\+[\d\s-]+)', part)
+            # Phone (has + and numbers, or \+ for escaped plus)
+            elif re.search(r'\\?\+[\d\s-]+', part):
+                phone_match = re.search(r'(\\?\+[\d\s-]+)', part)
                 if phone_match:
-                    contact.phone = phone_match.group(1).replace(' ', '').replace('-', '')
+                    contact.phone = phone_match.group(1).replace(' ', '').replace('-', '').replace('\\', '')
             # Location (first part usually)
             elif not contact.location and ',' in part and 'http' not in part:
                 contact.location = part
@@ -147,31 +162,50 @@ def parse_education_section(lines: List[str]) -> List[Education]:
         if not line:
             continue
 
-        # Check for school line (usually **School** **Location**)
-        school_match = re.match(r'\*\*([^*]+)\*\*\s+\*\*([^*]+)\*\*', line)
-        if school_match and 'university' in line.lower() or 'institute' in line.lower() or 'college' in line.lower():
-            if current:
-                educations.append(current)
-            current = Education(
-                school=school_match.group(1).strip(),
-                location=school_match.group(2).strip()
-            )
-            continue
+        # Check for school line (usually **School** **Location** or tab-separated)
+        # Handle: **School**	**Location** (tab separated)
+        school_match = re.match(r'\*\*([^*]+?)\*\*\s+\*\*([^*]+)\*\*', line)
+        # Handle: **School**	Location without closing ** before tab
+        if not school_match:
+            school_match = re.match(r'\*\*([^*]+?)\*\*\s+([^|]+)', line)
+        if school_match and any(kw in line.lower() for kw in ['university', 'institute', 'college', 'vit', 'iit', 'bits']):
+            # Make sure this looks like an education entry
+            school_name = school_match.group(1).strip()
+            if any(kw in school_name.lower() for kw in ['university', 'institute', 'college', 'vit', 'iit', 'bits']):
+                if current:
+                    educations.append(current)
+                current = Education(
+                    school=school_match.group(1).strip(),
+                    location=school_match.group(2).strip()
+                )
+                continue
 
-        # Degree and date line
-        if current and '*''' in line:
-            # Format: *Degree* Date or similar
-            degree_match = re.match(r'\*([^*]+)\*\s+(.+)', line)
-            if degree_match:
-                current.degree = degree_match.group(1).strip()
-                current.date = degree_match.group(2).strip()
+        # Degree and date line (format: *Degree* Date or *Degree*\tDate or just *Degree*)
+        if current and line.startswith('*') and not line.startswith('* '):
+            # Check for *Degree*\tDate pattern (tab-separated)
+            tab_match = re.match(r'\*([^*]+?)\*?\t+(.+)', line)
+            if tab_match:
+                current.degree = tab_match.group(1).strip()
+                current.date = tab_match.group(2).strip()
+            else:
+                # Check for *Degree* Date pattern (space-separated)
+                degree_match = re.match(r'\*([^*]+)\*\s+(.+)', line)
+                if degree_match:
+                    current.degree = degree_match.group(1).strip()
+                    current.date = degree_match.group(2).strip()
+                else:
+                    # Just *Degree* without date
+                    degree_only = re.match(r'\*([^*]+)\*', line)
+                    if degree_only:
+                        current.degree = degree_only.group(1).strip()
             continue
 
         # GPA and awards as bullet points
         if current and line.startswith('*'):
-            detail = line.lstrip('* ').strip()
+            # Remove the bullet marker (* or * ) but not formatting asterisks
+            detail = re.sub(r'^\*\s*', '', line).strip()
             if detail:
-                current.details.append(clean_markdown(detail))
+                current.details.append(detail)
 
     if current:
         educations.append(current)
@@ -190,9 +224,14 @@ def parse_experience_section(lines: List[str]) -> List[Experience]:
         if not line_stripped:
             continue
 
-        # Company and location: **Company** **Location**
-        company_match = re.match(r'\*\*([^*]+)\*\*\s+\*\*([^*]+)\*\*', line_stripped)
-        if company_match and not line_stripped.startswith('*'):
+        # Company and location: **Company** **Location** or **Company\tLocation**
+        company_match = re.match(r'\*\*([^*]+?)\*\*\s+\*\*([^*]+)\*\*', line_stripped)
+        # Handle tab-separated in one block: **Company\tLocation**
+        if not company_match:
+            tab_match = re.match(r'\*\*([^\*]+?)\t+([^\*]+)\*\*', line_stripped)
+            if tab_match:
+                company_match = tab_match
+        if company_match and not line_stripped.startswith('* '):
             if current and (current.bullets or current.company):
                 experiences.append(current)
             current = Experience(
@@ -224,9 +263,10 @@ def parse_experience_section(lines: List[str]) -> List[Experience]:
 
         # Bullet points
         if line_stripped.startswith('*') and current:
-            bullet = line_stripped.lstrip('* ').strip()
-            if bullet and not bullet.startswith('**'):
-                current.bullets.append(clean_markdown(bullet))
+            # Remove the bullet marker (* or * ) but not formatting asterisks
+            bullet = re.sub(r'^\*\s*', '', line_stripped).strip()
+            if bullet:
+                current.bullets.append(bullet)
 
     if current and (current.bullets or current.company):
         experiences.append(current)
@@ -288,9 +328,10 @@ def parse_project_section(lines: List[str]) -> List[Project]:
 
         # Bullet points for project
         if line_stripped.startswith('*') and current:
-            bullet = line_stripped.lstrip('* ').strip()
+            # Remove the bullet marker (* or * ) but not formatting asterisks
+            bullet = re.sub(r'^\*\s*', '', line_stripped).strip()
             if bullet:
-                current.bullets.append(clean_markdown(bullet))
+                current.bullets.append(bullet)
 
     if current and current.bullets:
         projects.append(current)
@@ -326,15 +367,17 @@ def parse_markdown(content: str) -> Resume:
     for i, line in enumerate(lines):
         line_stripped = line.strip()
 
-        # Check for section headers (all caps like EDUCATION, EXPERIENCE)
-        if line_stripped.isupper() and len(line_stripped) > 3 and '**' not in line_stripped:
+        # Check for section headers (all caps like EDUCATION, EXPERIENCE or **EDUCATION**)
+        # Remove ** markers for checking
+        line_clean = line_stripped.replace('**', '')
+        if line_clean.isupper() and len(line_clean) > 3:
             if current_section:
                 sections[current_section] = section_lines
             current_section = line_stripped
             section_lines = []
         elif current_section:
             section_lines.append(line)
-        elif i == 0 or (i == 1 and not line_stripped.startswith('#')):
+        else:
             # Header lines (before first section)
             if 'header' not in sections:
                 sections['header'] = []

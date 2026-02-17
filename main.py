@@ -1,5 +1,6 @@
 """FastAPI web application for Resume Converter + ATS Analyzer."""
 
+import base64
 import io
 import os
 import re
@@ -16,14 +17,6 @@ from src.md_parser import parse_markdown
 from src.latex_generator import generate_full_latex
 from src.pdf_generator import generate_pdf_bytes
 from src.ats_analyzer import analyze_resume, ATSReport
-from src.cache import (
-    get_cache_key,
-    get_cached_pdf,
-    get_cached_latex,
-    get_cached_ats,
-    cache_result,
-    get_cache_status
-)
 
 # Create FastAPI app
 app = FastAPI(title="Resume Converter + ATS Analyzer", version="2.0.0")
@@ -48,8 +41,20 @@ def normalize_resume_text(resume_text: str) -> str:
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    """Home page with upload form."""
+    """Landing page with two options."""
     return templates.TemplateResponse("index.html", {"request": request})
+
+
+@app.get("/convert", response_class=HTMLResponse)
+async def convert_page(request: Request):
+    """LaTeX/PDF conversion page."""
+    return templates.TemplateResponse("convert.html", {"request": request})
+
+
+@app.get("/analyze", response_class=HTMLResponse)
+async def analyze_page(request: Request):
+    """ATS analysis page."""
+    return templates.TemplateResponse("analyze_form.html", {"request": request})
 
 
 @app.post("/convert")
@@ -58,7 +63,7 @@ async def convert_resume(
     resume_text: str = Form(""),
     resume_file: Optional[UploadFile] = File(None)
 ):
-    """Convert markdown resume to LaTeX and PDF (cached)."""
+    """Convert markdown resume to LaTeX and PDF."""
     # Get content from file or text
     if resume_file and resume_file.filename:
         content = await resume_file.read()
@@ -69,32 +74,20 @@ async def convert_resume(
 
     if not resume_text.strip():
         return templates.TemplateResponse(
-            "index.html",
+            "convert.html",
             {"request": request, "error": "Please provide resume text or upload a file."}
         )
 
     try:
-        # Generate cache key
-        cache_key = get_cache_key(resume_text)
-        cache_info = get_cache_status(cache_key)
-
-        # Check cache for LaTeX
-        latex_content = get_cached_latex(cache_key)
-        if latex_content is None:
-            # Parse markdown and generate LaTeX
-            resume_data = parse_markdown(resume_text)
-            latex_content = generate_full_latex(resume_data)
-
-        # Check cache for PDF
-        pdf_bytes = get_cached_pdf(cache_key)
-        if pdf_bytes is None:
-            # Generate PDF
-            pdf_bytes = generate_pdf_bytes(latex_content)
-            # Cache the result
-            cache_result(cache_key, pdf=pdf_bytes, latex=latex_content)
-
-        # Determine contact name for display
+        # Parse markdown and generate LaTeX
         resume_data = parse_markdown(resume_text)
+        latex_content = generate_full_latex(resume_data)
+
+        # Generate PDF
+        pdf_bytes = generate_pdf_bytes(latex_content)
+
+        # Encode PDF as base64 for direct download
+        pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
 
         # Generate filename for download
         base_name = get_output_filename(original_name)
@@ -105,15 +98,16 @@ async def convert_resume(
             {
                 "request": request,
                 "latex_preview": latex_content[:2000] + "..." if len(latex_content) > 2000 else latex_content,
+                "full_latex": latex_content,
                 "download_filename": download_filename,
                 "contact_name": resume_data.contact.name or "Unknown",
-                "cache_status": "HIT" if cache_info.get('has_pdf') else "MISS"
+                "pdf_base64": pdf_base64
             }
         )
 
     except Exception as e:
         return templates.TemplateResponse(
-            "index.html",
+            "convert.html",
             {"request": request, "error": f"Conversion failed: {str(e)}"}
         )
 
@@ -140,21 +134,10 @@ async def convert_resume_stream(
         )
 
     try:
-        # Generate cache key
-        cache_key = get_cache_key(resume_text)
-
-        # Check cache first
-        pdf_bytes = get_cached_pdf(cache_key)
-        latex_content = get_cached_latex(cache_key)
-        cache_hit = pdf_bytes is not None
-
-        if pdf_bytes is None:
-            # Parse and generate
-            resume_data = parse_markdown(resume_text)
-            latex_content = generate_full_latex(resume_data)
-            pdf_bytes = generate_pdf_bytes(latex_content)
-            # Cache result
-            cache_result(cache_key, pdf=pdf_bytes, latex=latex_content)
+        # Parse and generate fresh PDF
+        resume_data = parse_markdown(resume_text)
+        latex_content = generate_full_latex(resume_data)
+        pdf_bytes = generate_pdf_bytes(latex_content)
 
         # Generate download filename
         base_name = get_output_filename(original_name)
@@ -165,14 +148,13 @@ async def convert_resume_stream(
             io.BytesIO(pdf_bytes),
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f'attachment; filename="{download_filename}"',
-                "X-Cache": "HIT" if cache_hit else "MISS"
+                "Content-Disposition": f'attachment; filename="{download_filename}"'
             }
         )
 
     except Exception as e:
         return templates.TemplateResponse(
-            "index.html",
+            "convert.html",
             {"request": request, "error": f"Conversion failed: {str(e)}"}
         )
 
@@ -185,7 +167,7 @@ async def analyze_resume_endpoint(
     job_description: str = Form(""),
     analysis_mode: str = Form("standalone")
 ):
-    """Analyze resume with ATS agent (cached)."""
+    """Analyze resume with ATS agent."""
     # Get content from file or text
     if resume_file and resume_file.filename:
         content = await resume_file.read()
@@ -193,40 +175,25 @@ async def analyze_resume_endpoint(
 
     if not resume_text.strip():
         return templates.TemplateResponse(
-            "index.html",
+            "analyze_form.html",
             {"request": request, "error": "Please provide resume text or upload a file."}
         )
 
     # Check for API key
     if not os.getenv("KIMI_API_KEY"):
         return templates.TemplateResponse(
-            "index.html",
+            "analyze_form.html",
             {"request": request, "error": "KIMI_API_KEY not set. Please set your Kimi API key."}
         )
 
     try:
-        # Generate cache key
-        cache_key = get_cache_key(resume_text)
-
         # Convert markdown to plain text for analysis
         plain_text = markdown.markdown(resume_text)
         plain_text = re.sub(r'<[^>]+>', '', plain_text)
 
-        # Check cache for ATS analysis
-        cached_ats = get_cached_ats(cache_key)
-        cache_hit = cached_ats is not None
-
-        if cached_ats is not None:
-            # Use cached report
-            report = ATSReport(**cached_ats)
-        else:
-            # Run analysis
-            job_desc = job_description if analysis_mode == "job_match" and job_description.strip() else None
-            report = await analyze_resume(plain_text, job_desc)
-
-            # Cache the report (convert to dict for storage)
-            ats_dict = report.to_dict()
-            cache_result(cache_key, ats=ats_dict)
+        # Run analysis
+        job_desc = job_description if analysis_mode == "job_match" and job_description.strip() else None
+        report = await analyze_resume(plain_text, job_desc)
 
         return templates.TemplateResponse(
             "analysis.html",
@@ -234,14 +201,13 @@ async def analyze_resume_endpoint(
                 "request": request,
                 "report": report,
                 "report_json": report.to_dict(),
-                "mode": "job-match" if (analysis_mode == "job_match" and job_description.strip()) else "standalone",
-                "cache_status": "HIT" if cache_hit else "MISS"
+                "mode": "job-match" if (analysis_mode == "job_match" and job_description.strip()) else "standalone"
             }
         )
 
     except Exception as e:
         return templates.TemplateResponse(
-            "index.html",
+            "analyze_form.html",
             {"request": request, "error": f"Analysis failed: {str(e)}"}
         )
 
@@ -254,16 +220,12 @@ async def download_latex(
     if not resume_text.strip():
         return JSONResponse({"error": "No resume text provided"}, status_code=400)
 
-    cache_key = get_cache_key(resume_text)
-    latex_content = get_cached_latex(cache_key)
-
-    if latex_content is None:
-        # Generate on the fly
-        try:
-            resume_data = parse_markdown(resume_text)
-            latex_content = generate_full_latex(resume_data)
-        except Exception as e:
-            return JSONResponse({"error": str(e)}, status_code=500)
+    # Generate on the fly
+    try:
+        resume_data = parse_markdown(resume_text)
+        latex_content = generate_full_latex(resume_data)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
 
     return StreamingResponse(
         io.BytesIO(latex_content.encode('utf-8')),
@@ -272,13 +234,6 @@ async def download_latex(
             "Content-Disposition": 'attachment; filename="resume+jake.tex"'
         }
     )
-
-
-@app.get("/cache-status")
-async def cache_status_endpoint():
-    """Get cache statistics (for monitoring)."""
-    from src.cache import get_cache_stats
-    return get_cache_stats()
 
 
 if __name__ == "__main__":
