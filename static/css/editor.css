@@ -1,9 +1,11 @@
-/* Editor-specific styles */
+/* ============================================
+   EDITOR STYLES
+   ============================================ */
 
 .editor-container {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 60px); /* Subtract header height */
+    block-size: calc(100dvb - 60px);
     background-color: var(--color-surface);
 }
 
@@ -54,6 +56,17 @@
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+    }
+
+    .spinner {
+        animation: none;
+        border-style: dashed;
+    }
 }
 
 /* Split Pane Layout */
@@ -378,7 +391,7 @@
 }
 
 /* Responsive */
-@media (max-width: 900px) {
+@media (max-width: 768px) {
     .editor-split {
         flex-direction: column;
     }
@@ -396,5 +409,16 @@
 
     .score-arrow {
         transform: rotate(90deg);
+    }
+
+    .editor-header {
+        flex-direction: column;
+        gap: var(--space-3);
+        align-items: flex-start;
+    }
+
+    .editor-header-right {
+        width: 100%;
+        justify-content: flex-start;
     }
 }
